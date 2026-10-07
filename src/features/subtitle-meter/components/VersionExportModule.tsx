@@ -1,13 +1,17 @@
 import type { Format, SubtitleProject } from "../models";
 import type { SubtitleMeterViewModel } from "../viewmodels/subtitleMeterViewModel";
+import { formatSavedAt } from "../diff/diffFormat";
+import type { CompareSelection } from "./VersionCompareModule";
 export function VersionExportModule({
   project,
   vm,
   phase,
+  onCompare,
 }: {
   project: SubtitleProject;
   vm: SubtitleMeterViewModel;
   phase: string;
+  onCompare: (selection: CompareSelection) => void;
 }) {
   return (
     <section className="module version-module">
@@ -27,23 +31,51 @@ export function VersionExportModule({
               : "保存当前版本以便回退"}
           </small>
         </div>
-        <button
-          className="secondary-button"
-          onClick={() => void vm.saveVersion()}
-        >
-          ＋ 保存快照
-        </button>
+        <div className="version-actions">
+          <button
+            className="secondary-button"
+            disabled={project.versions.length === 0}
+            onClick={() =>
+              onCompare({
+                sideAId: project.versions.at(-1)!.id,
+                sideBId: "current",
+              })
+            }
+          >
+            ⇄ 与当前对比
+          </button>
+          <button
+            className="secondary-button"
+            onClick={() => void vm.saveVersion()}
+          >
+            ＋ 保存快照
+          </button>
+        </div>
       </div>
       {project.versions.length > 0 && (
         <div className="version-list">
-          {project.versions.map((version) => (
-            <button
-              key={version.id}
-              onClick={() => void vm.restoreVersion(version.id)}
-            >
-              {version.label}
-              <span>恢复 ↗</span>
-            </button>
+          {[...project.versions].reverse().map((version) => (
+            <div key={version.id} className="version-item">
+              <button
+                className="version-restore"
+                onClick={() => void vm.restoreVersion(version.id)}
+              >
+                <span className="version-item-label">{version.label}</span>
+                <span className="version-item-time">
+                  {formatSavedAt(version.savedAt)}
+                </span>
+                <span className="version-restore-hint">恢复整份快照 ↗</span>
+              </button>
+              <button
+                type="button"
+                className="version-compare"
+                onClick={() =>
+                  onCompare({ sideAId: version.id, sideBId: "current" })
+                }
+              >
+                对比
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -67,7 +99,9 @@ export function VersionExportModule({
           导出字幕 <span>↓</span>
         </button>
       </div>
-      <p className="privacy-note">字幕文件与项目版本仅保存在当前浏览器</p>
+      <p className="privacy-note">
+        对比只读不改内容 · 字幕文件与项目版本仅保存在当前浏览器
+      </p>
     </section>
   );
 }

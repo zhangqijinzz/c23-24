@@ -3,6 +3,10 @@ import { ImportModule } from "../components/ImportModule";
 import { InspectionModule } from "../components/InspectionModule";
 import { PreviewModule } from "../components/PreviewModule";
 import { TimelineModule } from "../components/TimelineModule";
+import {
+  VersionCompareModule,
+  type CompareSelection,
+} from "../components/VersionCompareModule";
 import { VersionExportModule } from "../components/VersionExportModule";
 import { createViewModel } from "../viewmodels/subtitleMeterViewModel";
 
@@ -18,6 +22,8 @@ export function SubtitleMeter() {
   const vm = useMemo(createViewModel, []),
     state = useSyncExternalStore(vm.subscribe, vm.getSnapshot);
   const [activeTab, setActiveTab] = useState<TabId>("import");
+  const [compareSelection, setCompareSelection] =
+    useState<CompareSelection | null>(null);
   useEffect(() => {
     void vm.restore();
   }, [vm]);
@@ -196,6 +202,7 @@ export function SubtitleMeter() {
                 project={project}
                 vm={vm}
                 phase={state.phase}
+                onCompare={setCompareSelection}
               />
               <section className="module delivery-summary">
                 <span className="module-kicker">EXPORT CHECK</span>
@@ -216,6 +223,13 @@ export function SubtitleMeter() {
             )
           ))}
       </section>
+      {project && compareSelection && (
+        <VersionCompareModule
+          project={project}
+          initial={compareSelection}
+          onClose={() => setCompareSelection(null)}
+        />
+      )}
       <footer>
         <span>SUBTITLEMETER · 字幕节奏校对台</span>
         <span>DESIGNED FOR BETTER READING</span>
